@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+    <!-- ALL VUE STUFF HERE -->
+    <!-- <h1>Hellow WS!</h1>
+    <input type="text" v-model="messageToSend">
+    <button @click="sendessage"> Send!</button> -->
+
+
+    <!-- First screen everybody will be shown have two buttons host and player -->
+     <!-- When host presses the host button the button will disapear -->
+    <div v-if="page == 'lobby'">
+         <h1 class="Title">Boss Dungeon</h1>
+        <h2 id="">Select Your Role </h2>
+        <button @click="hostButton" v-if="!host">BECOME THE HOST</button>
+        <button @click="playerButton">Become A player</button>
+    </div>
+
+    <!-- Lobby for the host which is big screen -->
+    <div v-if="page == 'lobbyHost'">
+        <h1>WELCOME TO LOBBY HOST</h1>
+        <div v-for="player in players">
+            <h2>{{player.name}}</h2>
+            <h2>{{player.class}}</h2>
+        </div>
+        <button @click="startGame">Start Game</button>
+    </div>
+
+
+    <!-- lobby for the players which is players -->
+    <div v-if=" page == 'lobbyPlayer'">
+
+        <h2>Enter your Name</h2>
+        <input type="text" v-model="playersNameInput">
+
+        <h2>Select your class</h2>
+<div id="class-holder">
+    <div class="class-option" @click="myClass = 'Samurai'" :class="{ selected: myClass === 'Samurai' }">
+        <h3>Samurai</h3>
+        <p>HP: 120 | Damage: 15 | Mana: 100</p>
+        <div class="abilities">
+            <p class="ability">Double Strike (30 mana)</p>
+            <p class="ability">Precision Strike (40 mana)</p>
+            <p class="ability">Blade Storm (60 mana)</p>
+        </div>
+        <p class="description">A balanced warrior with high HP</p>
+    </div>
+    <div class="class-option" @click="myClass = 'Warrior'" :class="{ selected: myClass === 'Warrior' }">
+        <h3>Warrior</h3>
+        <p>HP: 100 | Damage: 20 | Mana: 80</p>
+        <div class="abilities">
+            <p class="ability">Two Turn Attack (25 mana)</p>
+            <p class="ability">Brutal Strike (45 mana)</p>
+            <p class="ability">Rage Strike (50 mana)</p>
+        </div>
+        <p>Status: 30% chance to go Berserk</p>
+        <p class="description">A powerful attacker who can go berserk, dealing more damage but taking more in return</p>
+    </div>
+    <div class="class-option" @click="myClass = 'Astrologer'" :class="{ selected: myClass === 'Astrologer' }">
+        <h3>Astrologer</h3>
+        <p>HP: 80 | Damage: 25 | Mana: 150</p>
+        <div class="abilities">
+            <p class="ability">Magic Burst (35 mana)</p>
+            <p class="ability">Arcane Missiles (40 mana)</p>
+            <p class="ability">Starfall (70 mana)</p>
+        </div>
+        <p>Status: 40% chance to Poison</p>
+        <p class="description">A fragile mage with high damage and the ability to poison enemies</p>
+    </div>
+    <div class="class-option" @click="myClass = 'Prophet'" :class="{ selected: myClass === 'Prophet' }">
+        <h3>Prophet</h3>
+        <p>HP: 90 | Damage: 10 | Mana: 120 | Healing: 40</p>
+        <div class="abilities">
+            <p class="ability">Heal (30 mana)</p>
+            <p class="ability">Divine Wrath (40 mana)</p>
+        </div>
+        <p>Status: 25% chance to Shield</p>
+        <p class="description">A support class that can heal allies and provide protective shields</p>
+    </div>
+</div>
+
+        <button @click="joinGame">Join Game</button> <!-- this will take them to lobby before game starts -->
+    </div>
+    <div v-if="page == 'startLobby'">
+        <h1>Waiting for other players</h1>
+        <div v-for="player in players">
+            <h2>{{player.name}} - Level {{player.level}}</h2>
+            <h3>{{player.class}}</h3>
+            <div class="health-bar">
+                <div class="health-fill" :style="{ width: (player.currentHp / player.maxHp * 100) + '%' }"></div>
+            </div>
+        </div>
+        <h2 v-else>Waiting for host to start the game...</h2>
+    </div>
+
+    <div v-if="page == 'battle'">
+        <div class="battle-container">
+            <div class="turn-indicator">
+                <h2 v-if="isBossTurn">{{currentBoss.name}}'s turn!</h2>
+                <h2 v-else>{{currentPlayer?.name}}'s turn</h2>
+            </div>
+
+            <div class="boss-section">
+                <h2>{{currentBoss.name}}</h2>
+                <div class="health-bar">
+                    <div class="health-fill" :style="{ width: (currentBoss.currentHp / currentBoss.maxHp * 100) + '%' }"></div>
+                </div>
+                <p>HP: {{currentBoss.currentHp}}/{{currentBoss.maxHp}}</p>
+                <div class="status-effects" v-if="currentBoss.statusEffects">
+                    <div v-for="effect in getStatusEffects(currentBoss)" 
+                         :key="effect.name"
+                         class="status-effect"
+                         :style="{ backgroundColor: effect.color }">
+                        {{effect.name}} ({{effect.duration}})
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-section" v-if="playerStats">
+                <h2>{{playerStats.name}} - Level {{playerStats.level}}</h2>
+                <div class="health-bar">
+                    <div class="health-fill" :style="{ width: (playerStats.currentHp / playerStats.maxHp * 100) + '%' }"></div>
+                </div>
+                <p>HP: {{playerStats.currentHp}}/{{playerStats.maxHp}}</p>
+                <div class="mana-bar">
+                    <div class="mana-fill" :style="{ width: (playerStats.currentMana / playerStats.maxMana * 100) + '%' }"></div>
+                </div>
+                <p>Mana: {{playerStats.currentMana}}/{{playerStats.maxMana}}</p>
+                <div class="status-effects" v-if="playerStats.statusEffects">
+                    <div v-for="effect in getStatusEffects(playerStats)" 
+                         :key="effect.name"
+                         class="status-effect"
+                         :style="{ backgroundColor: effect.color }">
+                        {{effect.name}} ({{effect.duration}})
+                    </div>
+                </div>
+                <div class="xp-bar">
+                    <div class="xp-fill" :style="{ width: calculateXpPercentage() + '%' }"></div>
+                </div>
+                <p>XP: {{playerStats.xp}}/{{playerStats.level * 100}}</p>
+            </div>
+
+            <div class="action-section">
+                <button @click="attack(false)" :disabled="!isMyTurn()">Attack</button>
+                <div v-if="playerStats?.class !== 'Prophet'" class="special-abilities">
+                    <button v-for="(ability, index) in playerStats?.specialAbilities" 
+                            :key="ability.name"
+                            @click="attack(true, index)" 
+                            :disabled="!isMyTurn() || playerStats.currentMana < ability.manaCost"
+                            :class="{ 'insufficient-mana': playerStats.currentMana < ability.manaCost }">
+                        {{ability.name}} ({{ability.manaCost}} mana)
+                    </button>
+                </div>
+                
+                <!-- Prophet's special ability buttons -->
+                <div v-if="playerStats?.class === 'Prophet'" class="special-abilities">
+                    <button v-for="(ability, index) in playerStats?.specialAbilities" 
+                            :key="ability.name"
+                            @click="handleProphetAbility(index)" 
+                            :disabled="!isMyTurn() || playerStats.currentMana < ability.manaCost"
+                            :class="{ 'insufficient-mana': playerStats.currentMana < ability.manaCost }">
+                        {{ability.name}} ({{ability.manaCost}} mana)
+                    </button>
+                    
+                    <!-- Heal target selection -->
+                    <div v-if="showHealTargets" class="heal-targets">
+                        <h3>Select a target to heal:</h3>
+                        <button v-for="player in availableHealTargets" 
+                                :key="player.name"
+                                @click="selectHealTarget(player.name)"
+                                class="heal-target-button">
+                            {{player.name}} (HP: {{player.currentHp}}/{{player.maxHp}})
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="battle-log" v-if="lastAction">
+                <p v-if="lastAction.player && lastAction.damage > 0">
+                    {{lastAction.player}} ({{lastAction.class}}) used {{lastAction.ability}} and dealt {{lastAction.damage}} damage!
+                    <span v-if="lastAction.criticalHit" class="critical-hit">CRITICAL HIT!</span>
+                </p>
+                <p v-if="lastAction.player && lastAction.heal > 0" class="heal-message">
+                    {{lastAction.player}} ({{lastAction.class}}) used {{lastAction.ability}} and healed {{lastAction.target || 'themselves'}} for {{lastAction.heal}} HP!
+                </p>
+                <p v-if="lastAction.statusMessage" class="status-message" :style="{ color: statusEffectDefinitions[lastAction.statusEffect]?.color }">
+                    {{lastAction.statusMessage}}
+                </p>
+                <p v-if="lastAction.boss" class="boss-attack">
+                    <template v-if="lastAction.specialAbility">
+                        <span class="special-ability">{{lastAction.specialMessage}}</span>
+                        <br>
+                        {{lastAction.boss}} dealt {{lastAction.damage}} damage to {{lastAction.targets.join(', ')}}!
+                    </template>
+                    <template v-else>
+                        {{lastAction.boss}} dealt {{lastAction.damage}} damage to {{lastAction.targets[0]}}!
+                    </template>
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    </div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
