@@ -6,7 +6,7 @@ A multiplayer web-based RPG where players team up to battle bosses in a turn-bas
 
 Boss Dungeon is a multiplayer game that allows multiple players to join a session hosted by a "host" player. Each player selects a character class with unique abilities and take turns to attack powerful boss enemies. 
 https://bossdungeon.onrender.com
-
+<img width="1763" height="690" alt="Screenshot 2026-05-01 122924" src="https://github.com/user-attachments/assets/70df05fe-3d92-4779-965f-3e010d6c308c" />
 ## How to Play
 
 ### Hosting a Game
